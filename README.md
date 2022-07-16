@@ -15,3 +15,5 @@ Unfortunately, due to the SharpZipLib dependency, I wasn't able to get this to c
 One or more input filepaths can be provided; paths can be individual files or directories. By default, if a directory is provided, all files immediately in the specified directory will be compressed. Use the /r flag to process directories recursively.
 
 As with my other utilities, flags are case insensitive and can be specified using '/' or '-' (e.g., '-v', '-F'), depending on your preference.
+
+Currently, the entire directory structure will be replicated in the zip file. I'm considering adding a flag to "flatten" paths, but it isn't a priority for me at this time.
