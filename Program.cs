@@ -127,92 +127,92 @@ USAGE:
             if (output_filepath == "")
             {
                 Console.WriteLine("[-] ERROR: No output filepath specified\n\nDONE");
-                System.Environment.Exit(1);
             }
             else if (File.Exists(output_filepath) && !force)
             {
                 Console.WriteLine("[-] ERROR: Output filepath already exists\n\nDONE");
-                System.Environment.Exit(1);
             }
-
-            byte[] buffer = new byte[4096];
-
-            try
+            else
             {
-                using (ZipOutputStream s = new ZipOutputStream(File.Create(output_filepath)))
+                byte[] buffer = new byte[4096];
+
+                try
                 {
-                    s.SetLevel(9); // 0 - store only to 9 - means best compression
-
-                    foreach (string path in input_filepaths)
+                    using (ZipOutputStream s = new ZipOutputStream(File.Create(output_filepath)))
                     {
-                        if (File.Exists(path))
-                        {
-                            // Compress individual file
-                            if (verbose)
-                            {
-                                Console.WriteLine(path);
-                            }
+                        s.SetLevel(9); // 0 - store only to 9 - means best compression
 
-                            s.PutNextEntry(new ZipEntry(path));
-
-                            using (FileStream fs = File.OpenRead(path))
-                            {
-                                StreamUtils.Copy(fs, s, buffer);
-                            }
-                        }
-                        else if (Directory.Exists(path))
+                        foreach (string path in input_filepaths)
                         {
-                            if (recursive)
+                            if (File.Exists(path))
                             {
-                                // Compress all files in and below the specified folder
-                                foreach (string p in WalkDirectoryTree(new DirectoryInfo(path)))
+                                // Compress individual file
+                                if (verbose)
                                 {
-                                    if (verbose)
+                                    Console.WriteLine(path);
+                                }
+
+                                s.PutNextEntry(new ZipEntry(path));
+
+                                using (FileStream fs = File.OpenRead(path))
+                                {
+                                    StreamUtils.Copy(fs, s, buffer);
+                                }
+                            }
+                            else if (Directory.Exists(path))
+                            {
+                                if (recursive)
+                                {
+                                    // Compress all files in and below the specified folder
+                                    foreach (string p in WalkDirectoryTree(new DirectoryInfo(path)))
                                     {
-                                        Console.WriteLine(p);
+                                        if (verbose)
+                                        {
+                                            Console.WriteLine(p);
+                                        }
+
+                                        s.PutNextEntry(new ZipEntry(p));
+
+                                        using (FileStream fs = File.OpenRead(p))
+                                        {
+                                            StreamUtils.Copy(fs, s, buffer);
+                                        }
                                     }
-
-                                    s.PutNextEntry(new ZipEntry(p));
-
-                                    using (FileStream fs = File.OpenRead(p))
+                                }
+                                else
+                                {
+                                    // Compress only files directly in the specified folder
+                                    foreach (string p in Directory.GetFiles(path))
                                     {
-                                        StreamUtils.Copy(fs, s, buffer);
+                                        if (verbose)
+                                        {
+                                            Console.WriteLine(p);
+                                        }
+
+                                        s.PutNextEntry(new ZipEntry(p));
+
+                                        using (FileStream fs = File.OpenRead(p))
+                                        {
+                                            StreamUtils.Copy(fs, s, buffer);
+                                        }
                                     }
                                 }
                             }
                             else
                             {
-                                // Compress only files directly in the specified folder
-                                foreach (string p in Directory.GetFiles(path))
-                                {
-                                    if (verbose)
-                                    {
-                                        Console.WriteLine(p);
-                                    }
-
-                                    s.PutNextEntry(new ZipEntry(p));
-
-                                    using (FileStream fs = File.OpenRead(p))
-                                    {
-                                        StreamUtils.Copy(fs, s, buffer);
-                                    }
-                                }
+                                // Output an error if the file was deleted between when it was added to the input_filepaths list and when it was read for compression
+                                Console.WriteLine("[-] ERROR 2: Path Not Found (" + path + ")");
                             }
-                        }
-                        else
-                        {
-                            // Output an error if the file was deleted between when it was added to the input_filepaths list and when it was read for compression
-                            Console.WriteLine("[-] ERROR 2: Path Not Found (" + path + ")");
                         }
                     }
                 }
+                catch (IOException e)
+                {
+                    Console.WriteLine("[-] ERROR: " + e.Message);
+                }
+                
+                Console.WriteLine("\nDONE");
             }
-            catch (IOException e)
-            {
-                Console.WriteLine("[-] ERROR: " + e.Message);
-            }
-
-             Console.WriteLine("\nDONE");
         }
     }
 }
